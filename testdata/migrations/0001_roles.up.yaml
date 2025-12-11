@@ -1,0 +1,11 @@
+version: 1
+actions:
+  - role: app:admin
+    ensure: present
+    add:
+      - app:read
+      - app:write
+  - role: app:user
+    ensure: present
+    add:
+      - app:read

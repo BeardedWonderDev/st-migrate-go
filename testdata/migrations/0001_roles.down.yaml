@@ -1,0 +1,6 @@
+version: 1
+actions:
+  - role: app:admin
+    ensure: absent
+  - role: app:user
+    ensure: absent
