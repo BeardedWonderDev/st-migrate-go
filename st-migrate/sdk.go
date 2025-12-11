@@ -2,6 +2,7 @@ package stmigrate
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
@@ -12,7 +13,11 @@ import (
 	"github.com/BeardedWonderDev/st-migrate-go/internal/state"
 	"github.com/BeardedWonderDev/st-migrate-go/internal/state/memory"
 	"github.com/golang-migrate/migrate/v4/database"
+	"github.com/golang-migrate/migrate/v4/database/mysql"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source"
+
 	// register default file source driver
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -86,8 +91,40 @@ func New(cfg Config) (*Runner, error) {
 	return &Runner{inner: r}, nil
 }
 
-// WrapMigrateDatabase allows consumers to supply a golang-migrate database driver as the state store.
-func WrapMigrateDatabase(driver database.Driver) state.Store {
+const defaultMigrationsTable = "st_schema_migrations"
+
+// WrapMigrateDatabase constructs a golang-migrate SQL driver with a default migrations table name
+// of "st_schema_migrations" (overridable via tableName) and wraps it as a state.Store.
+// Supported drivers: postgres, mysql, sqlite3.
+func WrapMigrateDatabase(driverName string, db *sql.DB, tableName string) (state.Store, error) {
+	if db == nil {
+		return nil, fmt.Errorf("database handle is nil")
+	}
+	if tableName == "" {
+		tableName = defaultMigrationsTable
+	}
+
+	var drv database.Driver
+	var err error
+	switch driverName {
+	case "postgres", "postgresql":
+		drv, err = postgres.WithInstance(db, &postgres.Config{MigrationsTable: tableName})
+	case "mysql":
+		drv, err = mysql.WithInstance(db, &mysql.Config{MigrationsTable: tableName})
+	case "sqlite3":
+		drv, err = sqlite3.WithInstance(db, &sqlite3.Config{MigrationsTable: tableName})
+	default:
+		return nil, fmt.Errorf("unsupported driver %q", driverName)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("create migrate driver: %w", err)
+	}
+	return state.NewMigrateAdapter(drv), nil
+}
+
+// WrapMigrateDriver wraps an already-constructed golang-migrate database driver as a state.Store.
+// Prefer WrapMigrateDatabase to control migrations table naming automatically - Use only for go-lang-migrate datbases not already implemented.
+func WrapMigrateDriver(driver database.Driver) state.Store {
 	if driver == nil {
 		return nil
 	}

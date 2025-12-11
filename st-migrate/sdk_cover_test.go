@@ -6,6 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWrapMigrateDatabaseNil(t *testing.T) {
-	require.Nil(t, WrapMigrateDatabase(nil))
+func TestWrapMigrateDriverNil(t *testing.T) {
+	require.Nil(t, WrapMigrateDriver(nil))
 }

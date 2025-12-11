@@ -168,16 +168,14 @@ Using a golang-migrate database driver (example: Postgres):
 ```go
 import (
     "github.com/BeardedWonderDev/st-migrate-go/st-migrate"
-    "github.com/golang-migrate/migrate/v4/database/postgres"
     _ "github.com/lib/pq"
 )
 
 // create or reuse *sql.DB ...
 db, _ := sql.Open("postgres", "<dsn>")
-driver, _ := postgres.WithInstance(db, &postgres.Config{})
 cfg := stmigrate.Config{
     SourceURL: "file://backend/migrations/auth",
-    Store:     stmigrate.WrapMigrateDatabase(driver),
+    Store:     stmigrate.WrapMigrateDatabase("postgres", db, ""),
 }
 r, _ := stmigrate.New(cfg)
 defer r.Close()
