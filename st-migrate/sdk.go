@@ -99,3 +99,8 @@ func (r *Runner) Status(ctx context.Context) (int, []uint, error) {
 func (r *Runner) Close() error {
 	return r.inner.Close()
 }
+
+// Migrate moves to the target version, applying up or down as needed.
+func (r *Runner) Migrate(ctx context.Context, target uint) error {
+	return r.inner.Migrate(ctx, target)
+}

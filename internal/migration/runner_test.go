@@ -127,3 +127,48 @@ func TestRunnerHandlesNoMigrations(t *testing.T) {
 	require.Equal(t, 0, v)
 	require.False(t, dirty)
 }
+
+func TestRunnerMigrateUpAndDown(t *testing.T) {
+	src, err := source.Open("file://../../testdata/migrations")
+	require.NoError(t, err)
+	migrations, err := LoadAll(src)
+	src.Close()
+	require.NoError(t, err)
+
+	store := memory.New()
+	exec := executor.NewMock()
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, exec, reg, nil, false, migrations)
+
+	// up to 2
+	require.NoError(t, r.Migrate(context.Background(), 2))
+	v, dirty, err := store.Version(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 2, v)
+	require.False(t, dirty)
+
+	// down to 1
+	require.NoError(t, r.Migrate(context.Background(), 1))
+	v, dirty, err = store.Version(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 1, v)
+	require.False(t, dirty)
+}
+
+func TestRunnerMigrateErrorsOnDirty(t *testing.T) {
+	store := memory.New()
+	require.NoError(t, store.SetVersion(context.Background(), 1, true))
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, executor.NewMock(), reg, nil, false, []Migration{})
+	require.Error(t, r.Migrate(context.Background(), 0))
+}
+
+func TestRunnerMigrateRejectsUnknownTarget(t *testing.T) {
+	store := memory.New()
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, executor.NewMock(), reg, nil, false, []Migration{
+		{Version: 1, Up: []byte("version:1"), Down: []byte("version:1")},
+	})
+	err := r.Migrate(context.Background(), 5)
+	require.Error(t, err)
+}

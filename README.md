@@ -123,6 +123,9 @@ st-migrate-go up 5
 st-migrate-go down
 st-migrate-go down 2
 
+# Migrate automatically to a target version (up or down)
+st-migrate-go migrate 5
+
 # Generate paired up/down files with the next version number
 st-migrate-go create add-reporting-roles
 ```
@@ -136,6 +139,7 @@ Flags:
 Typical workflows:
 - Bootstrap everything: `st-migrate-go up`
 - Targeted deploy: `st-migrate-go up 7`
+- Move to a specific version: `st-migrate-go migrate 5`
 - Rollback last step: `st-migrate-go down`
 - Create a new migration pair: `st-migrate-go create add-audit-role`
 
@@ -151,6 +155,11 @@ if err != nil {
 }
 defer r.Close()
 if err := r.Up(context.Background(), nil); err != nil {
+    // handle
+}
+
+// Auto-migrate to a specific version (up or down)
+if err := r.Migrate(context.Background(), 5); err != nil {
     // handle
 }
 ```

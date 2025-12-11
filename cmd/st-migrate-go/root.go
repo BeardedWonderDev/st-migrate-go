@@ -53,6 +53,7 @@ func newRootCmd(out io.Writer) *cobra.Command {
 	rootCmd.AddCommand(downCmd(&opts))
 	rootCmd.AddCommand(statusCmd(&opts))
 	rootCmd.AddCommand(createCmd(&opts))
+	rootCmd.AddCommand(migrateCmd(&opts))
 
 	return rootCmd
 }
@@ -157,6 +158,27 @@ func statusCmd(opts *cliOpts) *cobra.Command {
 				fmt.Fprintf(opts.output, "pending: %v\n", pending)
 			}
 			return nil
+		},
+	}
+}
+
+func migrateCmd(opts *cliOpts) *cobra.Command {
+	return &cobra.Command{
+		Use:   "migrate <version>",
+		Short: "Migrate up or down to the target version",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			n, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid target version: %w", err)
+			}
+			target := uint(n)
+			runner, err := buildRunner(opts)
+			if err != nil {
+				return err
+			}
+			defer runner.Close()
+			return runner.Migrate(context.Background(), target)
 		},
 	}
 }

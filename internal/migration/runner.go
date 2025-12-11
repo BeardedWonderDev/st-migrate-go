@@ -140,6 +140,88 @@ func (r *Runner) Close() error {
 	return r.store.Close()
 }
 
+// Migrate moves to the target version, applying up or down as needed.
+func (r *Runner) Migrate(ctx context.Context, target uint) error {
+	if err := r.store.Lock(ctx); err != nil {
+		return fmt.Errorf("lock state store: %w", err)
+	}
+	defer r.store.Unlock(ctx)
+
+	current, dirty, err := r.store.Version(ctx)
+	if err != nil {
+		return err
+	}
+	if dirty {
+		return fmt.Errorf("state is dirty; resolve before running migrations")
+	}
+	if uint(current) == target {
+		return nil
+	}
+
+	maxVersion := r.migrations[len(r.migrations)-1].Version
+	if target > maxVersion {
+		return fmt.Errorf("target version %d not found; max available %d", target, maxVersion)
+	}
+
+	if target > uint(current) {
+		return r.upTo(ctx, target)
+	}
+	return r.downTo(ctx, target, uint(current))
+}
+
+func (r *Runner) upTo(ctx context.Context, target uint) error {
+	for _, m := range r.migrations {
+		if m.Version > target {
+			break
+		}
+		if err := r.apply(ctx, m.Version, m.Up); err != nil {
+			_ = r.store.SetVersion(ctx, int(m.Version), true)
+			return err
+		}
+		if r.dryRun {
+			continue
+		}
+		if err := r.store.SetVersion(ctx, int(m.Version), false); err != nil {
+			return err
+		}
+		r.logger.Info("applied migration", slog.Uint64("version", uint64(m.Version)), slog.String("direction", "up"))
+	}
+	return nil
+}
+
+func (r *Runner) downTo(ctx context.Context, target uint, current uint) error {
+	// Build a set of versions we need to roll back.
+	needed := make(map[uint]Migration)
+	for _, m := range r.migrations {
+		if m.Version > target && m.Version <= current {
+			needed[m.Version] = m
+		}
+	}
+	// Roll back from current downward.
+	v := current
+	for v > target {
+		m, ok := needed[v]
+		if !ok {
+			return fmt.Errorf("missing migration version %d for rollback", v)
+		}
+		if err := r.apply(ctx, m.Version, m.Down); err != nil {
+			_ = r.store.SetVersion(ctx, int(m.Version), true)
+			return err
+		}
+		if !r.dryRun {
+			prev := previousVersion(r.migrations, m.Version)
+			if err := r.store.SetVersion(ctx, int(prev), false); err != nil {
+				return err
+			}
+			r.logger.Info("rolled back migration", slog.Uint64("version", uint64(m.Version)))
+			v = prev
+		} else {
+			v = previousVersion(r.migrations, m.Version)
+		}
+	}
+	return nil
+}
+
 func (r *Runner) apply(ctx context.Context, version uint, data []byte) error {
 	spec, err := r.registry.Parse(data)
 	if err != nil {

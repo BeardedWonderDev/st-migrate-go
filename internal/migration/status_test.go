@@ -26,3 +26,19 @@ func TestRunnerStatusReportsPending(t *testing.T) {
 	require.Equal(t, 1, current)
 	require.Equal(t, []uint{2}, pending)
 }
+
+func TestRunnerMigrateDryRunDoesNotMutate(t *testing.T) {
+	ms := []Migration{
+		{Version: 1, Up: []byte("version: 1\nactions:\n  - role: r\n"), Down: []byte("version: 1\nactions:\n  - role: r\n    ensure: absent\n")},
+	}
+	store := memory.New()
+	exec := executor.NewMock()
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, exec, reg, nil, true, ms)
+
+	require.NoError(t, r.Migrate(context.Background(), 1))
+	v, dirty, err := store.Version(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 0, v)
+	require.False(t, dirty)
+}
