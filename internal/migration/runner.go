@@ -64,6 +64,9 @@ func (r *Runner) Up(ctx context.Context, target *uint) error {
 			_ = r.store.SetVersion(ctx, int(m.Version), true)
 			return err
 		}
+		if r.dryRun {
+			continue
+		}
 		if err := r.store.SetVersion(ctx, int(m.Version), false); err != nil {
 			return err
 		}
@@ -103,6 +106,9 @@ func (r *Runner) Down(ctx context.Context, steps int) error {
 		if err := r.apply(ctx, m.Version, m.Down); err != nil {
 			_ = r.store.SetVersion(ctx, int(m.Version), true)
 			return err
+		}
+		if r.dryRun {
+			continue
 		}
 		prev := previousVersion(r.migrations, m.Version)
 		if err := r.store.SetVersion(ctx, int(prev), false); err != nil {

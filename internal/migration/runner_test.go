@@ -49,3 +49,48 @@ func TestRunnerUpAndDown(t *testing.T) {
 	require.False(t, dirty)
 	require.Equal(t, 1, version)
 }
+
+func TestRunnerDirtyStatePreventsActions(t *testing.T) {
+	m := memory.New()
+	require.NoError(t, m.SetVersion(context.Background(), 1, true))
+	exec := executor.NewMock()
+	reg := schema.DefaultRegistry()
+
+	r := NewRunner(m, exec, reg, nil, false, []Migration{})
+	err := r.Up(context.Background(), nil)
+	require.Error(t, err)
+	err = r.Down(context.Background(), 1)
+	require.Error(t, err)
+}
+
+func TestRunnerApplyErrorMarksDirty(t *testing.T) {
+	src, err := source.Open("file://../../testdata/migrations")
+	require.NoError(t, err)
+	migrations, err := LoadAll(src)
+	src.Close()
+	require.NoError(t, err)
+
+	store := memory.New()
+	exec := executor.NewMock()
+	exec.FailWith = context.Canceled
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, exec, reg, nil, false, migrations)
+
+	err = r.Up(context.Background(), nil)
+	require.Error(t, err)
+	_, dirty, derr := store.Version(context.Background())
+	require.NoError(t, derr)
+	require.True(t, dirty)
+}
+
+func TestRunnerMissingDownErrors(t *testing.T) {
+	store := memory.New()
+	require.NoError(t, store.SetVersion(context.Background(), 5, false))
+	exec := executor.NewMock()
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, exec, reg, nil, false, []Migration{
+		{Version: 1, Up: []byte("version:1"), Down: []byte("version:1")},
+	})
+	err := r.Down(context.Background(), 1)
+	require.Error(t, err)
+}
