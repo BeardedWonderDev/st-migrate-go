@@ -171,10 +171,8 @@ func buildStoreFromDB(driverName string, db *sql.DB, table string, skipClose boo
 			return nil, fmt.Errorf("create sqlite driver: %w", err)
 		}
 		store := state.NewMigrateAdapter(drv)
-		if skipClose {
-			return state.WrapNoClose(store), nil
-		}
-		return store, nil
+
+		return state.WrapNoClose(store), nil
 	default:
 		return nil, fmt.Errorf("unsupported driver %q", driverName)
 	}
