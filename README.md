@@ -249,4 +249,4 @@ If you need to reach us, please open an issue describing your question or reques
 [issues-shield]: https://img.shields.io/github/issues/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
 [issues-url]: https://github.com/BeardedWonderDev/st-migrate-go/issues
 [license-shield]: https://img.shields.io/github/license/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
-[license-url]: https://github.com/BeardedWonderDev/st-migrate-go
+[license-url]: https://github.com/BeardedWonderDev/st-migrate-go/blob/main/LICENSE
