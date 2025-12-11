@@ -78,6 +78,9 @@ func New(cfg Config) (*Runner, error) {
 
 // WrapMigrateDatabase allows consumers to supply a golang-migrate database driver as the state store.
 func WrapMigrateDatabase(driver database.Driver) state.Store {
+	if driver == nil {
+		return nil
+	}
 	return state.NewMigrateAdapter(driver)
 }
 

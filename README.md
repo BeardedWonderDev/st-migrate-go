@@ -8,6 +8,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
+[![Coverage][coverage-shield]][coverage-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -230,3 +231,5 @@ Project Link: [https://github.com/BeardedWonderDev/st-migrate-go](https://github
 [issues-url]: https://github.com/BeardedWonderDev/st-migrate-go/issues
 [license-shield]: https://img.shields.io/github/license/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
 [license-url]: https://github.com/BeardedWonderDev/st-migrate-go
+[coverage-shield]: https://img.shields.io/badge/coverage->=80%25-brightgreen?style=for-the-badge
+[coverage-url]: https://github.com/BeardedWonderDev/st-migrate-go/actions/workflows/ci.yml
