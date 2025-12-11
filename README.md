@@ -1,8 +1,10 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 
-[![Go Reference][go-ref-shield]][go-ref-url]
-[![Go Report Card][goreport-shield]][goreport-url]
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
 
 <!-- PROJECT LOGO -->
@@ -60,7 +62,7 @@ st-migrate-go is a migration runner for SuperTokens roles and permissions. It mi
 Key behaviors:
 - Migration order is defined solely by filename versions (`0001_name.up.yaml` / `.down.yaml`).
 - YAML `version` key now denotes the **schema version** (v1 today) to allow future format evolution.
-- Supports golang-migrate source drivers out of the box; state can be backed by migrate database drivers or the default in-memory store.
+- Supports golang-migrate source drivers out of the box; state can be backed by migrate database drivers or the default file/in-memory store.
 - Default executor applies changes via `supertokens-golang` role/permission APIs; pluggable for other backends.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -69,7 +71,7 @@ Key behaviors:
 
 - [Go](https://go.dev/)
 - [Cobra](https://github.com/spf13/cobra)
-- [golang-migrate](https://github.com/golang-migrate/migrate) (sources/stores)
+- [golang-migrate](https://github.com/golang-migrate/migrate)
 - [SuperTokens Go SDK](https://github.com/supertokens/supertokens-golang)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -197,7 +199,7 @@ Contributions are welcome! Please open an issue to discuss changes before submit
 <!-- LICENSE -->
 ## License
 
-Distributed under the Unlicense. See `LICENSE.txt` for details.
+This project is provided without a published license; please contact the maintainers if you need clarification on usage rights.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -214,13 +216,18 @@ Project Link: [https://github.com/BeardedWonderDev/st-migrate-go](https://github
 - [golang-migrate](https://github.com/golang-migrate/migrate)
 - [SuperTokens](https://supertokens.com/)
 - [Cobra](https://github.com/spf13/cobra)
+- [Best-README-Template](https://github.com/othneildrew/Best-README-Template)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[go-ref-shield]: https://pkg.go.dev/badge/github.com/BeardedWonderDev/st-migrate-go.svg
-[go-ref-url]: https://pkg.go.dev/github.com/BeardedWonderDev/st-migrate-go
-[goreport-shield]: https://goreportcard.com/badge/github.com/BeardedWonderDev/st-migrate-go
-[goreport-url]: https://goreportcard.com/report/github.com/BeardedWonderDev/st-migrate-go
-[license-shield]: https://img.shields.io/github/license/BeardedWonderDev/st-migrate-go.svg
-[license-url]: https://github.com/BeardedWonderDev/st-migrate-go/blob/main/LICENSE.txt
+[contributors-shield]: https://img.shields.io/github/contributors/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
+[contributors-url]: https://github.com/BeardedWonderDev/st-migrate-go/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
+[forks-url]: https://github.com/BeardedWonderDev/st-migrate-go/network/members
+[stars-shield]: https://img.shields.io/github/stars/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
+[stars-url]: https://github.com/BeardedWonderDev/st-migrate-go/stargazers
+[issues-shield]: https://img.shields.io/github/issues/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
+[issues-url]: https://github.com/BeardedWonderDev/st-migrate-go/issues
+[license-shield]: https://img.shields.io/github/license/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
+[license-url]: https://github.com/BeardedWonderDev/st-migrate-go
