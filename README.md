@@ -8,7 +8,6 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![License][license-shield]][license-url]
-[![Coverage][coverage-shield]][coverage-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -55,15 +54,15 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-st-migrate-go is a migration runner for SuperTokens roles and permissions. It mirrors the sequencing and source semantics of `golang-migrate`, so you can point at any migrate-compatible source (default: local files) while using a SuperTokens-aware executor. It ships as:
-- **SDK (`st-migrate/`)** for embedding migration logic in Go services.
-- **CLI (`cmd/st-migrate-go`)** for terminal-driven migration management.
+st-migrate-go lets you manage SuperTokens roles and permissions using golang-migrate–style migration sources. It keeps migrate’s filename-based ordering, adds schema-versioned YAML for future evolution, and ships as both a Go SDK and a CLI.
+- **SDK (`st-migrate/`)** to embed in Go services.
+- **CLI (`cmd/st-migrate-go`)** for terminal or CI/CD use.
 
 Key behaviors:
-- Migration order is defined solely by filename versions (`0001_name.up.yaml` / `.down.yaml`).
-- YAML `version` key now denotes the **schema version** (v1 today) to allow future format evolution.
-- Supports golang-migrate source drivers out of the box; state can be backed by migrate database drivers or the default file/in-memory store.
-- Default executor applies changes via `supertokens-golang` role/permission APIs; pluggable for other backends.
+- Order is defined by filenames (`0001_name.up.yaml` / `.down.yaml`).
+- YAML `version` is the schema version (v1 today); filenames control execution order.
+- Works with golang-migrate sources; state can be file-based (default) or any migrate DB driver (postgres/mysql/sqlite registered in the CLI).
+- Default executor calls `supertokens-golang`; you can plug in your own.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -91,13 +90,17 @@ Follow these steps to install and run the CLI, or embed the SDK in your Go appli
    git clone https://github.com/BeardedWonderDev/st-migrate-go.git
    cd st-migrate-go
    ```
-2. Install the CLI
+2. Install the CLI (or download a release binary)
    ```sh
    go install ./cmd/st-migrate-go
    ```
 3. (Optional) Vendor dependencies
    ```sh
    go mod tidy
+   ```
+4. Verify
+   ```sh
+   st-migrate-go --help
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -127,8 +130,14 @@ Flags:
 - `--source` migrate-style source URL (default `file://backend/migrations/auth`)
 - `--database` migrate database driver URL for state tracking (postgres, mysql, sqlite registered in CLI build)
 - `--state-file` path to a JSON state store used when `--database` is empty (default `.st-migrate/state.json`)
-- `--dry-run` log actions without executing
+- `--dry-run` log actions without executing or mutating state
 - `--verbose` enable debug logging
+
+Typical workflows:
+- Bootstrap everything: `st-migrate-go up`
+- Targeted deploy: `st-migrate-go up 7`
+- Rollback last step: `st-migrate-go down`
+- Create a new migration pair: `st-migrate-go create add-audit-role`
 
 ### SDK
 ```go
@@ -232,5 +241,3 @@ If you need to reach us, please open an issue describing your question or reques
 [issues-url]: https://github.com/BeardedWonderDev/st-migrate-go/issues
 [license-shield]: https://img.shields.io/github/license/BeardedWonderDev/st-migrate-go.svg?style=for-the-badge
 [license-url]: https://github.com/BeardedWonderDev/st-migrate-go
-[coverage-shield]: https://img.shields.io/badge/coverage->=80%25-brightgreen?style=for-the-badge
-[coverage-url]: https://github.com/BeardedWonderDev/st-migrate-go/actions/workflows/ci.yml
