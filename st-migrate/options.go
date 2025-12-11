@@ -21,4 +21,6 @@ type Config struct {
 	DB              *sql.DB
 	DBDriver        string // postgres | mysql | sqlite3
 	MigrationsTable string
+	// SkipCloseDB prevents the runner from closing the store/driver when using a shared DB (primarily for sqlite3).
+	SkipCloseDB bool
 }

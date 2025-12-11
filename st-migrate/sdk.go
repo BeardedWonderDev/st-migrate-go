@@ -124,7 +124,7 @@ func resolveStore(cfg Config, logger *slog.Logger) (state.Store, error) {
 		if table == "" {
 			table = defaultMigrationsTable
 		}
-		store, err := buildStoreFromDB(strings.ToLower(cfg.DBDriver), cfg.DB, table, logger)
+		store, err := buildStoreFromDB(strings.ToLower(cfg.DBDriver), cfg.DB, table, cfg.SkipCloseDB, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -133,7 +133,7 @@ func resolveStore(cfg Config, logger *slog.Logger) (state.Store, error) {
 	return memory.New(), nil
 }
 
-func buildStoreFromDB(driverName string, db *sql.DB, table string, logger *slog.Logger) (state.Store, error) {
+func buildStoreFromDB(driverName string, db *sql.DB, table string, skipClose bool, logger *slog.Logger) (state.Store, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database handle is nil")
 	}
@@ -170,7 +170,11 @@ func buildStoreFromDB(driverName string, db *sql.DB, table string, logger *slog.
 			logger.Error("create sqlite driver", slog.Any("err", err))
 			return nil, fmt.Errorf("create sqlite driver: %w", err)
 		}
-		return state.NewMigrateAdapter(drv), nil
+		store := state.NewMigrateAdapter(drv)
+		if skipClose {
+			return state.WrapNoClose(store), nil
+		}
+		return store, nil
 	default:
 		return nil, fmt.Errorf("unsupported driver %q", driverName)
 	}
