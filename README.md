@@ -11,16 +11,14 @@
 <br />
 <div align="center">
   <a href="https://github.com/BeardedWonderDev/st-migrate-go">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="images/logo.png" alt="Logo" width="400" height="400">
   </a>
-
-  <h3 align="center">st-migrate-go</h3>
 
   <p align="center">
     SuperTokens role/permission migrations with golang-migrate style sources, as an SDK and CLI.
-    <br />
+    <!-- <br />
     <a href="https://github.com/BeardedWonderDev/st-migrate-go"><strong>Explore the docs »</strong></a>
-    <br />
+    <br /> -->
     <br />
     <a href="https://github.com/BeardedWonderDev/st-migrate-go/issues">Report Bug</a>
     ·
@@ -28,7 +26,7 @@
   </p>
 </div>
 
-<!-- TABLE OF CONTENTS -->
+<!-- TABLE OF CONTENTS
 <details>
   <summary>Table of Contents</summary>
   <ol>
@@ -50,7 +48,7 @@
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
-</details>
+</details> -->
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
