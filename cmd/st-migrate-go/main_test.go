@@ -88,3 +88,21 @@ func TestCLIDownAndDryRun(t *testing.T) {
 	require.NoError(t, cmd.Execute())
 	require.Contains(t, out.String(), "current version: 1")
 }
+
+func TestCLIUpTargetAppliesPartial(t *testing.T) {
+	stmigrate.SetDefaultExecutorFactory(func() executor.Executor { return executor.NewMock() })
+	tmpDir := t.TempDir()
+	stateFile := filepath.Join(tmpDir, "state.json")
+	source := "file://" + filepath.Join("..", "..", "testdata", "migrations")
+
+	var out bytes.Buffer
+	cmd := newRootCmd(&out)
+	cmd.SetArgs([]string{"--source", source, "--state-file", stateFile, "up", "1"})
+	require.NoError(t, cmd.Execute())
+
+	out.Reset()
+	cmd = newRootCmd(&out)
+	cmd.SetArgs([]string{"--source", source, "--state-file", stateFile, "status"})
+	require.NoError(t, cmd.Execute())
+	require.Contains(t, out.String(), "current version: 1")
+}

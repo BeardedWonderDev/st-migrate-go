@@ -33,3 +33,10 @@ func TestRegistryUnknownSchema(t *testing.T) {
 	_, err := reg.Parse([]byte(`version: 99`))
 	require.Error(t, err)
 }
+
+func TestParserDefaultsSchemaVersionWhenMissing(t *testing.T) {
+	reg := DefaultRegistry()
+	spec, err := reg.Parse([]byte(`actions:\n  - role: a`))
+	require.NoError(t, err)
+	require.Equal(t, 1, spec.Version)
+}

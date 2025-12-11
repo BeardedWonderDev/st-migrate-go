@@ -94,3 +94,36 @@ func TestRunnerMissingDownErrors(t *testing.T) {
 	err := r.Down(context.Background(), 1)
 	require.Error(t, err)
 }
+
+func TestRunnerUpRespectsTarget(t *testing.T) {
+	src, err := source.Open("file://../../testdata/migrations")
+	require.NoError(t, err)
+	migrations, err := LoadAll(src)
+	src.Close()
+	require.NoError(t, err)
+
+	store := memory.New()
+	exec := executor.NewMock()
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, exec, reg, nil, false, migrations)
+
+	target := uint(1)
+	require.NoError(t, r.Up(context.Background(), &target))
+
+	v, dirty, err := store.Version(context.Background())
+	require.NoError(t, err)
+	require.False(t, dirty)
+	require.Equal(t, 1, v)
+}
+
+func TestRunnerHandlesNoMigrations(t *testing.T) {
+	store := memory.New()
+	exec := executor.NewMock()
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, exec, reg, nil, false, []Migration{})
+	require.NoError(t, r.Up(context.Background(), nil))
+	v, dirty, err := store.Version(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 0, v)
+	require.False(t, dirty)
+}
