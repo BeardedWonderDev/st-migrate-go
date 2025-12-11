@@ -1,0 +1,101 @@
+project_name: st-migrate-go
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: cli
+    main: ./cmd/st-migrate-go
+    binary: st-migrate-go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+archives:
+  - id: release-archives
+    builds:
+      - cli
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  draft: false
+  replace_existing_draft: true
+  prerelease: auto
+  mode: replace
+
+changelog:
+  use: github
+  sort: asc
+  ai:
+    use: openai
+    model: gpt-4o-mini
+    prompt: |
+      Write the release notes for this release. Your output must be a clean, readable, human-oriented changelog following the Keep a Changelog 1.1.0 format (fully embedded below). Only return the generated release notes—no explanations, no commentary, no reflections.
+
+      Instructions
+        •	No emojis.
+        •	Provide a brief, user-impactful summary immediately after the version heading.
+        •	Do not produce a raw git log. Curate, group, and summarize.
+        •	Format the top-level heading exactly as follows using the actual release date if present; if absent, omit the date entirely.:
+          - {{ .Tag }} - YYYY-MM-DD
+        •	All output must be valid Markdown.
+
+      Changelogs must emphasize clarity, human readability, and the reasons behind changes. After the version heading:
+        1.	Provide a short, high-level summary of the release impact.
+        2.	Group changes under only the categories that apply, using these exact headings:
+            - Added
+            - Changed
+            - Deprecated
+            - Removed
+            - Fixed
+            = Security
+        3.	Each bullet point should describe what changed from the perspective of an end user or operator.
+        4.	Commit messages must appear verbatim when referenced.
+        5.	When multiple commits relate to the same functional change, group them into a single bullet and list the commit SHAs inside the bullet.
+        6.	When multiple commits update the same dependency, group them and show:
+            - sha1, sha2: updated dependency-x from vA.B.C to vX.Y.Z
+        7.	Avoid noise: omit purely internal or irrelevant commits unless they affect behavior or developer experience.
+
+      Commit Overview Requirement
+
+      For each category used, produce:
+        •	A curated set of bullet points summarizing actual changes.
+        •	A commit list grouped under each bullet or sub-bullet.
+        •	Do not paraphrase commit messages. Keep them exact.
+
+      Release Context
+
+      Project: {{.ProjectName}}
+      Repository: {{.GitURL}}
+
+      {{ if eq .Tag "" }}
+      Previous Version: {{.Version}}
+      Version: to be defined
+      {{ else }}
+      Previous Version: {{.PreviousTag}}
+      Version: {{.Tag}}
+      {{ end }}
+
+      {{ if .IsSnapshot }}Snapshot build.{{ end }}
+      {{ if .IsNightly }}Nightly build.{{ end }}
+      {{ with .TagSubject }}Tag subject: {{ . }}{{ end }}
+      {{ with .TagContents }}Tag content: {{ . }}{{ end }}
+
+      Release Notes Output
+
+      {{ .ReleaseNotes }}
