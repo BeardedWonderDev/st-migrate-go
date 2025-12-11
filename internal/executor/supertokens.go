@@ -48,6 +48,9 @@ func OverrideRolesClient(client RolesClient) {
 }
 
 func (s *SuperTokensExecutor) EnsureRole(_ context.Context, role string) error {
+	if err := ensureInitialized(); err != nil {
+		return err
+	}
 	if strings.TrimSpace(role) == "" {
 		return nil
 	}
@@ -61,6 +64,9 @@ func (s *SuperTokensExecutor) EnsureRole(_ context.Context, role string) error {
 }
 
 func (s *SuperTokensExecutor) DeleteRole(_ context.Context, role string) error {
+	if err := ensureInitialized(); err != nil {
+		return err
+	}
 	if strings.TrimSpace(role) == "" {
 		return nil
 	}
@@ -78,6 +84,9 @@ func (s *SuperTokensExecutor) DeleteRole(_ context.Context, role string) error {
 }
 
 func (s *SuperTokensExecutor) AddPermissions(_ context.Context, role string, perms []string) error {
+	if err := ensureInitialized(); err != nil {
+		return err
+	}
 	if len(perms) == 0 {
 		return nil
 	}
@@ -91,6 +100,9 @@ func (s *SuperTokensExecutor) AddPermissions(_ context.Context, role string, per
 }
 
 func (s *SuperTokensExecutor) RemovePermissions(_ context.Context, role string, perms []string) error {
+	if err := ensureInitialized(); err != nil {
+		return err
+	}
 	if len(perms) == 0 {
 		return nil
 	}
@@ -101,4 +113,16 @@ func (s *SuperTokensExecutor) RemovePermissions(_ context.Context, role string, 
 		slog.Info("permissions removed", slog.String("role", role), slog.Int("count", len(perms)))
 	}
 	return err
+}
+
+// ensureInitialized checks that supertokens.Init has been called; if not, returns a helpful error.
+func ensureInitialized() error {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error("supertokens not initialized; call supertokens.Init before running st-migrate-go")
+		}
+	}()
+	// GetAllCORSHeaders reads the global config and will panic if uninitialized.
+	_ = supertokens.GetAllCORSHeaders()
+	return nil
 }

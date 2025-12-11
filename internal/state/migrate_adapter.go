@@ -25,6 +25,9 @@ func (m *MigrateAdapter) Version(_ context.Context) (int, bool, error) {
 		slog.Error("driver version", slog.Any("err", err))
 		return 0, false, err
 	}
+	if v == database.NilVersion {
+		v = 0
+	}
 	return v, dirty, nil
 }
 

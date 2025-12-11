@@ -56,6 +56,10 @@ func (r *Runner) Up(ctx context.Context, target *uint) error {
 		r.logger.Error("read version", slog.Any("err", err))
 		return err
 	}
+	if current < 0 {
+		r.logger.Debug("normalizing negative current version to zero", slog.Int("current", current))
+		current = 0
+	}
 	if dirty {
 		r.logger.Warn("state is dirty; refusing to run migrations")
 		return fmt.Errorf("state is dirty; resolve before running migrations")
@@ -184,6 +188,10 @@ func (r *Runner) Migrate(ctx context.Context, target uint) error {
 	if err != nil {
 		r.logger.Error("read version", slog.Any("err", err))
 		return err
+	}
+	if current < 0 {
+		r.logger.Debug("normalizing negative current version to zero", slog.Int("current", current))
+		current = 0
 	}
 	if dirty {
 		r.logger.Warn("state is dirty; refusing to migrate")

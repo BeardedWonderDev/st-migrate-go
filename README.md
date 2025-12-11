@@ -164,6 +164,8 @@ if err := r.Migrate(context.Background(), 5); err != nil {
 }
 ```
 
+> Initialize the SuperTokens Go SDK in your application (e.g., `supertokens.Init(...)`) before constructing the runner so role/permission calls can reach your SuperTokens core.
+
 Using a golang-migrate database driver (example: Postgres):
 ```go
 import (
