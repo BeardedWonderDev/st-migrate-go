@@ -50,11 +50,11 @@ actions:
 - Validation: role non-empty; ensure ∈ {present, absent}; dedupe/normalize permissions (lowercase, trimmed).
 
 ## Components & File Map (implemented)
-- `cmd/st-migrate-go/main.go` — Cobra CLI wiring to SDK (`up`, `down`, `status`, `create`).
+- `cmd/st-migrate-go/main.go` / `root.go` — Cobra CLI wiring to SDK (`up`, `down`, `status`, `create`), registers postgres/mysql/sqlite migrate drivers.
 - `sdk/sdk.go`, `sdk/options.go` — Public facade building the runner; defaults to file source, SuperTokens executor, and in-memory state store; helper to wrap golang-migrate `database.Driver`.
 - `internal/schema/{types.go,parser.go,v1.go}` — Schema version dispatch and v1 parser/validator (schema version defaults to 1).
 - `internal/migration/{migration.go,loader.go,runner.go}` — Loads migrations via golang-migrate source drivers (ordered by filename version) and executes Up/Down/Status with locking and dirty tracking.
-- `internal/state/state.go` — Store interface mirroring migrate’s version/lock surface; `memory/` impl for defaults; `migrate_adapter.go` to wrap a migrate `database.Driver`.
+- `internal/state/state.go` — Store interface mirroring migrate’s version/lock surface; `memory/` impl for tests; `file/` durable JSON-backed store (default for CLI); `migrate_adapter.go` to wrap a migrate `database.Driver`.
 - `internal/executor/{executor.go,supertokens.go,mock.go}` — Backend abstraction plus SuperTokens default and test mock.
 - `internal/create/scaffold.go` — Scaffolds paired up/down YAML files with next sequential version.
 - `testdata/migrations/` — Sample schema v1 migrations used by tests.

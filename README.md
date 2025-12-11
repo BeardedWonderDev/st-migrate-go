@@ -123,7 +123,8 @@ st-migrate-go create add-reporting-roles
 ```
 Flags:
 - `--source` migrate-style source URL (default `file://backend/migrations/auth`)
-- `--database` migrate database driver URL for state tracking (defaults to in-memory)
+- `--database` migrate database driver URL for state tracking (postgres, mysql, sqlite registered in CLI build)
+- `--state-file` path to a JSON state store used when `--database` is empty (default `.st-migrate/state.json`)
 - `--dry-run` log actions without executing
 - `--verbose` enable debug logging
 
@@ -143,6 +144,26 @@ if err := r.Up(context.Background(), nil); err != nil {
 }
 ```
 
+Using a golang-migrate database driver (example: Postgres):
+```go
+import (
+    "github.com/BeardedWonderDev/st-migrate-go/sdk"
+    "github.com/golang-migrate/migrate/v4/database/postgres"
+    _ "github.com/lib/pq"
+)
+
+// create or reuse *sql.DB ...
+db, _ := sql.Open("postgres", "<dsn>")
+driver, _ := postgres.WithInstance(db, &postgres.Config{})
+cfg := sdk.Config{
+    SourceURL: "file://backend/migrations/auth",
+    Store:     sdk.WrapMigrateDatabase(driver),
+}
+r, _ := sdk.New(cfg)
+defer r.Close()
+_ = r.Up(context.Background(), nil)
+```
+
 YAML schema v1:
 ```yaml
 version: 1          # schema version
@@ -158,7 +179,6 @@ actions:
 <!-- ROADMAP -->
 ## Roadmap
 
-- Register common golang-migrate database drivers in CLI builds for persistent state
 - Add additional sources (embed, git, s3)
 - Schema v2 exploration (richer permission metadata)
 - Advisory locking strategy for multi-runner safety

@@ -22,6 +22,17 @@ type Runner struct {
 	inner *migration.Runner
 }
 
+var defaultExecutorFactory = func() executor.Executor {
+	return executor.NewSuperTokensExecutor()
+}
+
+// SetDefaultExecutorFactory overrides the default executor factory (intended for tests).
+func SetDefaultExecutorFactory(f func() executor.Executor) {
+	if f != nil {
+		defaultExecutorFactory = f
+	}
+}
+
 // New constructs a Runner using the provided configuration.
 // If Store is nil, an in-memory store is used. If Executor is nil, SuperTokens is used.
 // If Registry is nil, the default schema registry is used.
@@ -33,7 +44,7 @@ func New(cfg Config) (*Runner, error) {
 
 	exec := cfg.Executor
 	if exec == nil {
-		exec = executor.NewSuperTokensExecutor()
+		exec = defaultExecutorFactory()
 	}
 
 	store := cfg.Store
