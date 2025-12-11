@@ -1,0 +1,30 @@
+name: Contact / Question
+description: Ask a question or get in touch with the maintainers
+title: "[Contact] "
+labels: ["question"]
+assignees: []
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: What do you need?
+      description: Describe your question or the context for contacting us.
+      placeholder: e.g., Clarify licensing for commercial use; request support for a specific driver; etc.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Additional details
+      description: Add any relevant links, logs, or examples.
+      placeholder: Links, versions, steps to reproduce (if applicable)
+    validations:
+      required: false
+  - type: input
+    id: contact
+    attributes:
+      label: Preferred follow-up
+      description: Optional contact method (if you want us to reach out).
+      placeholder: email or GitHub handle
+    validations:
+      required: false

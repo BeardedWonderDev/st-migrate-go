@@ -199,14 +199,15 @@ Contributions are welcome! Please open an issue to discuss changes before submit
 <!-- LICENSE -->
 ## License
 
-This project is provided without a published license; please contact the maintainers if you need clarification on usage rights.
+This project is licensed under the Apache License 2.0. See `LICENSE.txt` for details.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- CONTACT -->
 ## Contact
 
-Project Link: [https://github.com/BeardedWonderDev/st-migrate-go](https://github.com/BeardedWonderDev/st-migrate-go)
+Project Link: [https://github.com/BeardedWonderDev/st-migrate-go](https://github.com/BeardedWonderDev/st-migrate-go).  
+If you need to reach us, please open an issue describing your question or request.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
