@@ -1,6 +1,8 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
 
+<div align="center">
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -15,15 +17,14 @@
   </a>
 
   <p align="center">
-    SuperTokens role/permission migrations with golang-migrate style sources, as an SDK and CLI.
-    <!-- <br />
-    <a href="https://github.com/BeardedWonderDev/st-migrate-go"><strong>Explore the docs »</strong></a>
-    <br /> -->
-    <br />
     <a href="https://github.com/BeardedWonderDev/st-migrate-go/issues">Report Bug</a>
     ·
     <a href="https://github.com/BeardedWonderDev/st-migrate-go/issues">Request Feature</a>
   </p>
+</div>
+
+<h3>SuperTokens role/permission migrations with golang-migrate style sources, as an SDK and CLI.</h3>
+
 </div>
 
 <!-- TABLE OF CONTENTS
