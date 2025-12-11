@@ -60,17 +60,27 @@ func New(cfg Config) (*Runner, error) {
 	sourceURL := cfg.SourceURL
 	if sourceURL == "" {
 		sourceURL = "file://backend/migrations/auth"
+		logger.Debug("no source url provided; using default", slog.String("source", sourceURL))
 	}
 
 	src, err := source.Open(sourceURL)
 	if err != nil {
+		logger.Error("open source", slog.String("source", sourceURL), slog.Any("err", err))
 		return nil, fmt.Errorf("open source %s: %w", sourceURL, err)
 	}
-	migrations, err := migration.LoadAll(src)
+	migrations, err := migration.LoadAll(src, logger)
 	src.Close()
 	if err != nil {
+		logger.Error("load migrations", slog.String("source", sourceURL), slog.Any("err", err))
 		return nil, fmt.Errorf("load migrations: %w", err)
 	}
+
+	logger.Info("constructed runner",
+		slog.String("source", sourceURL),
+		slog.Bool("dry_run", cfg.DryRun),
+		slog.String("executor", fmt.Sprintf("%T", exec)),
+		slog.String("store", fmt.Sprintf("%T", store)),
+	)
 
 	r := migration.NewRunner(store, exec, reg, logger, cfg.DryRun, migrations)
 	return &Runner{inner: r}, nil

@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 )
 
@@ -37,6 +38,7 @@ func (s *Store) SetVersion(_ context.Context, version int, dirty bool) error {
 	defer s.mu.Unlock()
 	s.version = version
 	s.dirty = dirty
+	slog.Info("state updated (memory)", slog.Int("version", version), slog.Bool("dirty", dirty))
 	return nil
 }
 
@@ -44,9 +46,11 @@ func (s *Store) Lock(_ context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.locked {
+		slog.Warn("state lock already held (memory)")
 		return ErrLocked
 	}
 	s.locked = true
+	slog.Debug("state lock acquired (memory)")
 	return nil
 }
 
@@ -54,9 +58,11 @@ func (s *Store) Unlock(_ context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if !s.locked {
+		slog.Warn("state unlock requested when not locked (memory)")
 		return ErrNotLocked
 	}
 	s.locked = false
+	slog.Debug("state lock released (memory)")
 	return nil
 }
 

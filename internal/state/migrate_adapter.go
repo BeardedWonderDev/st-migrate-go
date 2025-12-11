@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/golang-migrate/migrate/v4/database"
 )
@@ -19,21 +20,45 @@ func NewMigrateAdapter(driver database.Driver) *MigrateAdapter {
 }
 
 func (m *MigrateAdapter) Version(_ context.Context) (int, bool, error) {
-	return m.driver.Version()
+	v, dirty, err := m.driver.Version()
+	if err != nil {
+		slog.Error("driver version", slog.Any("err", err))
+		return 0, false, err
+	}
+	return v, dirty, nil
 }
 
 func (m *MigrateAdapter) SetVersion(_ context.Context, version int, dirty bool) error {
-	return m.driver.SetVersion(version, dirty)
+	if err := m.driver.SetVersion(version, dirty); err != nil {
+		slog.Error("driver set version", slog.Int("version", version), slog.Bool("dirty", dirty), slog.Any("err", err))
+		return err
+	}
+	slog.Info("state updated (migrate driver)", slog.Int("version", version), slog.Bool("dirty", dirty))
+	return nil
 }
 
 func (m *MigrateAdapter) Lock(_ context.Context) error {
-	return m.driver.Lock()
+	if err := m.driver.Lock(); err != nil {
+		slog.Error("driver lock", slog.Any("err", err))
+		return err
+	}
+	slog.Debug("state lock acquired (migrate driver)")
+	return nil
 }
 
 func (m *MigrateAdapter) Unlock(_ context.Context) error {
-	return m.driver.Unlock()
+	if err := m.driver.Unlock(); err != nil {
+		slog.Error("driver unlock", slog.Any("err", err))
+		return err
+	}
+	slog.Debug("state lock released (migrate driver)")
+	return nil
 }
 
 func (m *MigrateAdapter) Close() error {
-	return m.driver.Close()
+	if err := m.driver.Close(); err != nil {
+		slog.Error("driver close", slog.Any("err", err))
+		return err
+	}
+	return nil
 }

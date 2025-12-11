@@ -17,7 +17,7 @@ import (
 func TestRunnerUpAndDown(t *testing.T) {
 	src, err := source.Open("file://../../testdata/migrations")
 	require.NoError(t, err)
-	migrations, err := LoadAll(src)
+	migrations, err := LoadAll(src, nil)
 	src.Close()
 	require.NoError(t, err)
 	require.Len(t, migrations, 2)
@@ -66,7 +66,7 @@ func TestRunnerDirtyStatePreventsActions(t *testing.T) {
 func TestRunnerApplyErrorMarksDirty(t *testing.T) {
 	src, err := source.Open("file://../../testdata/migrations")
 	require.NoError(t, err)
-	migrations, err := LoadAll(src)
+	migrations, err := LoadAll(src, nil)
 	src.Close()
 	require.NoError(t, err)
 
@@ -98,7 +98,7 @@ func TestRunnerMissingDownErrors(t *testing.T) {
 func TestRunnerUpRespectsTarget(t *testing.T) {
 	src, err := source.Open("file://../../testdata/migrations")
 	require.NoError(t, err)
-	migrations, err := LoadAll(src)
+	migrations, err := LoadAll(src, nil)
 	src.Close()
 	require.NoError(t, err)
 
@@ -131,7 +131,7 @@ func TestRunnerHandlesNoMigrations(t *testing.T) {
 func TestRunnerMigrateUpAndDown(t *testing.T) {
 	src, err := source.Open("file://../../testdata/migrations")
 	require.NoError(t, err)
-	migrations, err := LoadAll(src)
+	migrations, err := LoadAll(src, nil)
 	src.Close()
 	require.NoError(t, err)
 

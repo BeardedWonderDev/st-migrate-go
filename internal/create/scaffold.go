@@ -2,6 +2,7 @@ package create
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -30,10 +31,12 @@ func Scaffold(opts Options) (upPath, downPath string, err error) {
 		opts.SchemaVersion = 1
 	}
 	if err := os.MkdirAll(opts.Dir, 0o755); err != nil {
+		slog.Error("create migrations directory", slog.String("dir", opts.Dir), slog.Any("err", err))
 		return "", "", err
 	}
 	next, err := nextVersion(opts.Dir)
 	if err != nil {
+		slog.Error("compute next version", slog.String("dir", opts.Dir), slog.Any("err", err))
 		return "", "", err
 	}
 
@@ -57,17 +60,21 @@ actions:
 `, opts.SchemaVersion)
 
 	if err := os.WriteFile(upPath, []byte(upContent), 0o644); err != nil {
+		slog.Error("write up migration", slog.String("path", upPath), slog.Any("err", err))
 		return "", "", err
 	}
 	if err := os.WriteFile(downPath, []byte(downContent), 0o644); err != nil {
+		slog.Error("write down migration", slog.String("path", downPath), slog.Any("err", err))
 		return "", "", err
 	}
+	slog.Info("scaffolded migration pair", slog.String("up", upPath), slog.String("down", downPath), slog.Uint64("version", uint64(next)))
 	return upPath, downPath, nil
 }
 
 func nextVersion(dir string) (uint, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
+		slog.Debug("migrations dir missing, starting at 1", slog.String("dir", dir), slog.Any("err", err))
 		return 1, nil // directory missing -> start at 1
 	}
 	var max uint

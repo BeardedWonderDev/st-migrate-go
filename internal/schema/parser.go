@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"log/slog"
 
 	"gopkg.in/yaml.v3"
 )
@@ -33,6 +34,7 @@ func (r *Registry) Parse(data []byte) (*Spec, error) {
 		Version int `yaml:"version"`
 	}
 	if err := yaml.Unmarshal(data, &meta); err != nil {
+		slog.Error("parse schema metadata", slog.Any("err", err))
 		return nil, fmt.Errorf("parse schema metadata: %w", err)
 	}
 	schemaVersion := meta.Version
@@ -41,6 +43,7 @@ func (r *Registry) Parse(data []byte) (*Spec, error) {
 	}
 	parser, ok := r.parsers[schemaVersion]
 	if !ok {
+		slog.Warn("unsupported schema version", slog.Int("version", schemaVersion))
 		return nil, fmt.Errorf("unsupported schema version %d", schemaVersion)
 	}
 	return parser.Parse(data)

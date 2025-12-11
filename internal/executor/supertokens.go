@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/supertokens/supertokens-golang/recipe/userroles"
@@ -51,6 +52,11 @@ func (s *SuperTokensExecutor) EnsureRole(_ context.Context, role string) error {
 		return nil
 	}
 	_, err := rolesClient.CreateNewRoleOrAddPermissions(role, []string{}, nil)
+	if err != nil {
+		slog.Error("supertokens ensure role", slog.String("role", role), slog.Any("err", err))
+	} else {
+		slog.Info("role ensured", slog.String("role", role))
+	}
 	return err
 }
 
@@ -60,11 +66,14 @@ func (s *SuperTokensExecutor) DeleteRole(_ context.Context, role string) error {
 	}
 	resp, err := rolesClient.DeleteRole(role, nil)
 	if err != nil {
+		slog.Error("supertokens delete role", slog.String("role", role), slog.Any("err", err))
 		return err
 	}
 	if resp.OK != nil && !resp.OK.DidRoleExist {
+		slog.Info("role did not exist; nothing to delete", slog.String("role", role))
 		return nil
 	}
+	slog.Info("role deleted", slog.String("role", role))
 	return nil
 }
 
@@ -73,6 +82,11 @@ func (s *SuperTokensExecutor) AddPermissions(_ context.Context, role string, per
 		return nil
 	}
 	_, err := rolesClient.CreateNewRoleOrAddPermissions(role, perms, nil)
+	if err != nil {
+		slog.Error("supertokens add permissions", slog.String("role", role), slog.Any("err", err), slog.Int("count", len(perms)))
+	} else {
+		slog.Info("permissions added", slog.String("role", role), slog.Int("count", len(perms)))
+	}
 	return err
 }
 
@@ -81,5 +95,10 @@ func (s *SuperTokensExecutor) RemovePermissions(_ context.Context, role string, 
 		return nil
 	}
 	_, err := rolesClient.RemovePermissionsFromRole(role, perms, nil)
+	if err != nil {
+		slog.Error("supertokens remove permissions", slog.String("role", role), slog.Any("err", err), slog.Int("count", len(perms)))
+	} else {
+		slog.Info("permissions removed", slog.String("role", role), slog.Int("count", len(perms)))
+	}
 	return err
 }

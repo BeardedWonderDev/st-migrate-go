@@ -27,6 +27,7 @@ type cliOpts struct {
 	width     int
 	schemaVer int
 	output    io.Writer
+	logger    *slog.Logger
 }
 
 func newRootCmd(out io.Writer) *cobra.Command {
@@ -59,11 +60,7 @@ func newRootCmd(out io.Writer) *cobra.Command {
 }
 
 func buildRunner(opts *cliOpts) (*stmigrate.Runner, error) {
-	level := slog.LevelInfo
-	if opts.verbose {
-		level = slog.LevelDebug
-	}
-	logger := slog.New(slog.NewTextHandler(opts.output, &slog.HandlerOptions{Level: level}))
+	logger := getLogger(opts)
 
 	cfg := stmigrate.Config{
 		SourceURL: opts.sourceURL,
@@ -80,6 +77,7 @@ func buildRunner(opts *cliOpts) (*stmigrate.Runner, error) {
 	} else {
 		fs, err := filestore.New(opts.stateFile)
 		if err != nil {
+			logger.Error("init state file", slog.String("state_file", opts.stateFile), slog.Any("err", err))
 			return nil, fmt.Errorf("init state file: %w", err)
 		}
 		cfg.Store = fs
@@ -88,27 +86,47 @@ func buildRunner(opts *cliOpts) (*stmigrate.Runner, error) {
 	return stmigrate.New(cfg)
 }
 
+func getLogger(opts *cliOpts) *slog.Logger {
+	if opts.logger != nil {
+		return opts.logger
+	}
+	level := slog.LevelInfo
+	if opts.verbose {
+		level = slog.LevelDebug
+	}
+	opts.logger = slog.New(slog.NewTextHandler(opts.output, &slog.HandlerOptions{Level: level}))
+	return opts.logger
+}
+
 func upCmd(opts *cliOpts) *cobra.Command {
 	return &cobra.Command{
 		Use:   "up [target]",
 		Short: "Apply pending migrations",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := getLogger(opts)
 			var target *uint
 			if len(args) == 1 {
 				n, err := strconv.ParseUint(args[0], 10, 64)
 				if err != nil {
+					logger.Error("invalid target version", slog.String("input", args[0]), slog.Any("err", err))
 					return fmt.Errorf("invalid target version: %w", err)
 				}
 				val := uint(n)
 				target = &val
 			}
+			logger.Info("command: up", slog.String("source", opts.sourceURL), slog.String("database", opts.database), slog.String("state_file", opts.stateFile), slog.Bool("dry_run", opts.dryRun), slog.Any("target", target))
 			runner, err := buildRunner(opts)
 			if err != nil {
+				logger.Error("build runner", slog.Any("err", err))
 				return err
 			}
 			defer runner.Close()
-			return runner.Up(context.Background(), target)
+			if err := runner.Up(context.Background(), target); err != nil {
+				logger.Error("up failed", slog.Any("err", err))
+				return err
+			}
+			return nil
 		},
 	}
 }
@@ -119,20 +137,28 @@ func downCmd(opts *cliOpts) *cobra.Command {
 		Short: "Roll back applied migrations",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := getLogger(opts)
 			steps := 1
 			if len(args) == 1 {
 				n, err := strconv.Atoi(args[0])
 				if err != nil {
+					logger.Error("invalid steps", slog.String("input", args[0]), slog.Any("err", err))
 					return fmt.Errorf("invalid steps: %w", err)
 				}
 				steps = n
 			}
+			logger.Info("command: down", slog.String("source", opts.sourceURL), slog.String("database", opts.database), slog.String("state_file", opts.stateFile), slog.Bool("dry_run", opts.dryRun), slog.Int("steps", steps))
 			runner, err := buildRunner(opts)
 			if err != nil {
+				logger.Error("build runner", slog.Any("err", err))
 				return err
 			}
 			defer runner.Close()
-			return runner.Down(context.Background(), steps)
+			if err := runner.Down(context.Background(), steps); err != nil {
+				logger.Error("down failed", slog.Any("err", err))
+				return err
+			}
+			return nil
 		},
 	}
 }
@@ -142,13 +168,17 @@ func statusCmd(opts *cliOpts) *cobra.Command {
 		Use:   "status",
 		Short: "Show current and pending migrations",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := getLogger(opts)
+			logger.Info("command: status", slog.String("source", opts.sourceURL), slog.String("database", opts.database), slog.String("state_file", opts.stateFile), slog.Bool("dry_run", opts.dryRun))
 			runner, err := buildRunner(opts)
 			if err != nil {
+				logger.Error("build runner", slog.Any("err", err))
 				return err
 			}
 			defer runner.Close()
 			current, pending, err := runner.Status(context.Background())
 			if err != nil {
+				logger.Error("status failed", slog.Any("err", err))
 				return err
 			}
 			fmt.Fprintf(opts.output, "current version: %d\n", current)
@@ -168,17 +198,25 @@ func migrateCmd(opts *cliOpts) *cobra.Command {
 		Short: "Migrate up or down to the target version",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := getLogger(opts)
 			n, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
+				logger.Error("invalid target version", slog.String("input", args[0]), slog.Any("err", err))
 				return fmt.Errorf("invalid target version: %w", err)
 			}
 			target := uint(n)
+			logger.Info("command: migrate", slog.String("source", opts.sourceURL), slog.String("database", opts.database), slog.String("state_file", opts.stateFile), slog.Bool("dry_run", opts.dryRun), slog.Uint64("target", uint64(target)))
 			runner, err := buildRunner(opts)
 			if err != nil {
+				logger.Error("build runner", slog.Any("err", err))
 				return err
 			}
 			defer runner.Close()
-			return runner.Migrate(context.Background(), target)
+			if err := runner.Migrate(context.Background(), target); err != nil {
+				logger.Error("migrate failed", slog.Any("err", err))
+				return err
+			}
+			return nil
 		},
 	}
 }
@@ -189,6 +227,7 @@ func createCmd(opts *cliOpts) *cobra.Command {
 		Short: "Create paired up/down migration files",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := getLogger(opts)
 			dir := sourceURLToPath(opts.sourceURL)
 			opts := create.Options{
 				Dir:           dir,
@@ -196,8 +235,10 @@ func createCmd(opts *cliOpts) *cobra.Command {
 				Width:         opts.width,
 				SchemaVersion: opts.schemaVer,
 			}
+			logger.Info("command: create", slog.String("dir", dir), slog.String("name", args[0]), slog.Int("width", opts.Width), slog.Int("schema_version", opts.SchemaVersion))
 			up, down, err := create.Scaffold(opts)
 			if err != nil {
+				logger.Error("create scaffold failed", slog.Any("err", err))
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "created %s\ncreated %s\n", up, down)
