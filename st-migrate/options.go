@@ -1,4 +1,4 @@
-package sdk
+package stmigrate
 
 import (
 	"log/slog"

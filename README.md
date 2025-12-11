@@ -56,7 +56,7 @@
 ## About The Project
 
 st-migrate-go is a migration runner for SuperTokens roles and permissions. It mirrors the sequencing and source semantics of `golang-migrate`, so you can point at any migrate-compatible source (default: local files) while using a SuperTokens-aware executor. It ships as:
-- **SDK (`sdk/`)** for embedding migration logic in Go services.
+- **SDK (`st-migrate/`)** for embedding migration logic in Go services.
 - **CLI (`cmd/st-migrate-go`)** for terminal-driven migration management.
 
 Key behaviors:
@@ -132,11 +132,11 @@ Flags:
 
 ### SDK
 ```go
-cfg := sdk.Config{
+cfg := stmigrate.Config{
     SourceURL: "file://backend/migrations/auth",
     // Optional: Store, Executor, Logger, DryRun, Registry
 }
-r, err := sdk.New(cfg)
+r, err := stmigrate.New(cfg)
 if err != nil {
     // handle
 }
@@ -149,7 +149,7 @@ if err := r.Up(context.Background(), nil); err != nil {
 Using a golang-migrate database driver (example: Postgres):
 ```go
 import (
-    "github.com/BeardedWonderDev/st-migrate-go/sdk"
+    "github.com/BeardedWonderDev/st-migrate-go/st-migrate"
     "github.com/golang-migrate/migrate/v4/database/postgres"
     _ "github.com/lib/pq"
 )
@@ -157,11 +157,11 @@ import (
 // create or reuse *sql.DB ...
 db, _ := sql.Open("postgres", "<dsn>")
 driver, _ := postgres.WithInstance(db, &postgres.Config{})
-cfg := sdk.Config{
+cfg := stmigrate.Config{
     SourceURL: "file://backend/migrations/auth",
-    Store:     sdk.WrapMigrateDatabase(driver),
+    Store:     stmigrate.WrapMigrateDatabase(driver),
 }
-r, _ := sdk.New(cfg)
+r, _ := stmigrate.New(cfg)
 defer r.Close()
 _ = r.Up(context.Background(), nil)
 ```

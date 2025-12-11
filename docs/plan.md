@@ -20,7 +20,7 @@
 ## Key Decisions
 - **Directory layout**
   - `cmd/st-migrate-go/` — CLI entrypoint.
-  - `sdk/` — Public API surface for embedding in other apps.
+  - `st-migrate/` — Public API surface for embedding in other apps.
   - `internal/` — Engine, schema parsers, runner, driver shims, test fixtures; no exported surface.
 - **Schema versioning**
   - Filename number controls migration order (golang-migrate style).
@@ -51,7 +51,7 @@ actions:
 
 ## Components & File Map (implemented)
 - `cmd/st-migrate-go/main.go` / `root.go` — Cobra CLI wiring to SDK (`up`, `down`, `status`, `create`), registers postgres/mysql/sqlite migrate drivers.
-- `sdk/sdk.go`, `sdk/options.go` — Public facade building the runner; defaults to file source, SuperTokens executor, and in-memory state store; helper to wrap golang-migrate `database.Driver`.
+- `st-migrate/sdk.go`, `st-migrate/options.go` — Public facade building the runner; defaults to file source, SuperTokens executor, and in-memory state store; helper to wrap golang-migrate `database.Driver`.
 - `internal/schema/{types.go,parser.go,v1.go}` — Schema version dispatch and v1 parser/validator (schema version defaults to 1).
 - `internal/migration/{migration.go,loader.go,runner.go}` — Loads migrations via golang-migrate source drivers (ordered by filename version) and executes Up/Down/Status with locking and dirty tracking.
 - `internal/state/state.go` — Store interface mirroring migrate’s version/lock surface; `memory/` impl for tests; `file/` durable JSON-backed store (default for CLI); `migrate_adapter.go` to wrap a migrate `database.Driver`.

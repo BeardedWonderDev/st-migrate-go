@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	"github.com/BeardedWonderDev/st-migrate-go/internal/executor"
-	"github.com/BeardedWonderDev/st-migrate-go/sdk"
+	stmigrate "github.com/BeardedWonderDev/st-migrate-go/st-migrate"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCLIUpAndStatusWithFileStore(t *testing.T) {
-	sdk.SetDefaultExecutorFactory(func() executor.Executor { return executor.NewMock() })
+	stmigrate.SetDefaultExecutorFactory(func() executor.Executor { return executor.NewMock() })
 
 	tmpDir := t.TempDir()
 	stateFile := filepath.Join(tmpDir, "state.json")
@@ -37,7 +37,7 @@ func TestCLIUpAndStatusWithFileStore(t *testing.T) {
 }
 
 func TestCLICreateWritesFiles(t *testing.T) {
-	sdk.SetDefaultExecutorFactory(func() executor.Executor { return executor.NewMock() })
+	stmigrate.SetDefaultExecutorFactory(func() executor.Executor { return executor.NewMock() })
 
 	tmpDir := t.TempDir()
 	source := "file://" + tmpDir

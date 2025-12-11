@@ -9,7 +9,7 @@ import (
 
 	"github.com/BeardedWonderDev/st-migrate-go/internal/create"
 	filestore "github.com/BeardedWonderDev/st-migrate-go/internal/state/file"
-	"github.com/BeardedWonderDev/st-migrate-go/sdk"
+	"github.com/BeardedWonderDev/st-migrate-go/st-migrate"
 	"github.com/golang-migrate/migrate/v4/database"
 	// common database drivers registered for CLI
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
@@ -57,14 +57,14 @@ func newRootCmd(out io.Writer) *cobra.Command {
 	return rootCmd
 }
 
-func buildRunner(opts *cliOpts) (*sdk.Runner, error) {
+func buildRunner(opts *cliOpts) (*stmigrate.Runner, error) {
 	level := slog.LevelInfo
 	if opts.verbose {
 		level = slog.LevelDebug
 	}
 	logger := slog.New(slog.NewTextHandler(opts.output, &slog.HandlerOptions{Level: level}))
 
-	cfg := sdk.Config{
+	cfg := stmigrate.Config{
 		SourceURL: opts.sourceURL,
 		DryRun:    opts.dryRun,
 		Logger:    logger,
@@ -75,7 +75,7 @@ func buildRunner(opts *cliOpts) (*sdk.Runner, error) {
 		if err != nil {
 			return nil, fmt.Errorf("open database driver: %w", err)
 		}
-		cfg.Store = sdk.WrapMigrateDatabase(drv)
+		cfg.Store = stmigrate.WrapMigrateDatabase(drv)
 	} else {
 		fs, err := filestore.New(opts.stateFile)
 		if err != nil {
@@ -84,7 +84,7 @@ func buildRunner(opts *cliOpts) (*sdk.Runner, error) {
 		cfg.Store = fs
 	}
 
-	return sdk.New(cfg)
+	return stmigrate.New(cfg)
 }
 
 func upCmd(opts *cliOpts) *cobra.Command {
