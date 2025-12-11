@@ -177,7 +177,8 @@ import (
 db, _ := sql.Open("postgres", "<dsn>")
 cfg := stmigrate.Config{
     SourceURL: "file://backend/migrations/auth",
-    Store:     stmigrate.WrapMigrateDatabase("postgres", db, ""),
+    DB:        db,
+    DBDriver:  "postgres",
 }
 r, _ := stmigrate.New(cfg)
 defer r.Close()

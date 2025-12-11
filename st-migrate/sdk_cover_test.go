@@ -7,5 +7,6 @@ import (
 )
 
 func TestWrapMigrateDriverNil(t *testing.T) {
-	require.Nil(t, WrapMigrateDriver(nil))
+	_, err := NewWithWrappedDriver(Config{}, nil)
+	require.Error(t, err)
 }

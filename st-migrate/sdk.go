@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/BeardedWonderDev/st-migrate-go/internal/executor"
 	"github.com/BeardedWonderDev/st-migrate-go/internal/migration"
@@ -52,14 +53,14 @@ func New(cfg Config) (*Runner, error) {
 		exec = defaultExecutorFactory()
 	}
 
-	store := cfg.Store
-	if store == nil {
-		store = memory.New()
-	}
-
 	logger := cfg.Logger
 	if logger == nil {
 		logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
+	}
+
+	store, err := resolveStore(cfg, logger)
+	if err != nil {
+		return nil, err
 	}
 
 	sourceURL := cfg.SourceURL
@@ -93,42 +94,86 @@ func New(cfg Config) (*Runner, error) {
 
 const defaultMigrationsTable = "st_schema_migrations"
 
-// WrapMigrateDatabase constructs a golang-migrate SQL driver with a default migrations table name
-// of "st_schema_migrations" (overridable via tableName) and wraps it as a state.Store.
-// Supported drivers: postgres, mysql, sqlite3.
-func WrapMigrateDatabase(driverName string, db *sql.DB, tableName string) (state.Store, error) {
+// NewWithWrappedDatabase builds a migrate driver from the provided *sql.DB and driver name, then constructs a Runner.
+// The driver is built with a dedicated connection so closing the runner will not close the caller's DB pool.
+func NewWithWrappedDatabase(cfg Config, driverName string, db *sql.DB, tableName string) (*Runner, error) {
+	cfg.DB = db
+	cfg.DBDriver = driverName
+	cfg.MigrationsTable = tableName
+	return New(cfg)
+}
+
+// NewWithWrappedDriver wraps an existing migrate database.Driver and constructs a Runner.
+func NewWithWrappedDriver(cfg Config, driver database.Driver) (*Runner, error) {
+	if driver == nil {
+		return nil, fmt.Errorf("driver is nil")
+	}
+	cfg.Store = state.NewMigrateAdapter(driver)
+	return New(cfg)
+}
+
+func resolveStore(cfg Config, logger *slog.Logger) (state.Store, error) {
+	if cfg.Store != nil {
+		return cfg.Store, nil
+	}
+	if cfg.DBDriver != "" {
+		if cfg.DB == nil {
+			return nil, fmt.Errorf("db driver set but DB is nil")
+		}
+		table := cfg.MigrationsTable
+		if table == "" {
+			table = defaultMigrationsTable
+		}
+		store, err := buildStoreFromDB(strings.ToLower(cfg.DBDriver), cfg.DB, table, logger)
+		if err != nil {
+			return nil, err
+		}
+		return store, nil
+	}
+	return memory.New(), nil
+}
+
+func buildStoreFromDB(driverName string, db *sql.DB, table string, logger *slog.Logger) (state.Store, error) {
 	if db == nil {
 		return nil, fmt.Errorf("database handle is nil")
 	}
-	if tableName == "" {
-		tableName = defaultMigrationsTable
-	}
+	ctx := context.Background()
 
-	var drv database.Driver
-	var err error
 	switch driverName {
 	case "postgres", "postgresql":
-		drv, err = postgres.WithInstance(db, &postgres.Config{MigrationsTable: tableName})
+		conn, err := db.Conn(ctx)
+		if err != nil {
+			logger.Error("open postgres conn", slog.Any("err", err))
+			return nil, fmt.Errorf("open postgres conn: %w", err)
+		}
+		drv, err := postgres.WithConnection(ctx, conn, &postgres.Config{MigrationsTable: table})
+		if err != nil {
+			logger.Error("create postgres driver", slog.Any("err", err))
+			return nil, fmt.Errorf("create postgres driver: %w", err)
+		}
+		return state.NewMigrateAdapter(drv), nil
 	case "mysql":
-		drv, err = mysql.WithInstance(db, &mysql.Config{MigrationsTable: tableName})
+		conn, err := db.Conn(ctx)
+		if err != nil {
+			logger.Error("open mysql conn", slog.Any("err", err))
+			return nil, fmt.Errorf("open mysql conn: %w", err)
+		}
+		drv, err := mysql.WithConnection(ctx, conn, &mysql.Config{MigrationsTable: table})
+		if err != nil {
+			logger.Error("create mysql driver", slog.Any("err", err))
+			return nil, fmt.Errorf("create mysql driver: %w", err)
+		}
+		return state.NewMigrateAdapter(drv), nil
 	case "sqlite3":
-		drv, err = sqlite3.WithInstance(db, &sqlite3.Config{MigrationsTable: tableName})
+		drv, err := sqlite3.WithInstance(db, &sqlite3.Config{MigrationsTable: table})
+		if err != nil {
+			logger.Error("create sqlite driver", slog.Any("err", err))
+			return nil, fmt.Errorf("create sqlite driver: %w", err)
+		}
+		return state.NewMigrateAdapter(drv), nil
 	default:
 		return nil, fmt.Errorf("unsupported driver %q", driverName)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("create migrate driver: %w", err)
-	}
-	return state.NewMigrateAdapter(drv), nil
-}
-
-// WrapMigrateDriver wraps an already-constructed golang-migrate database driver as a state.Store.
-// Prefer WrapMigrateDatabase to control migrations table naming automatically - Use only for go-lang-migrate datbases not already implemented.
-func WrapMigrateDriver(driver database.Driver) state.Store {
-	if driver == nil {
-		return nil
-	}
-	return state.NewMigrateAdapter(driver)
 }
 
 func (r *Runner) Up(ctx context.Context, target *uint) error {

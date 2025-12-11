@@ -73,7 +73,7 @@ func buildRunner(opts *cliOpts) (*stmigrate.Runner, error) {
 		if err != nil {
 			return nil, fmt.Errorf("open database driver: %w", err)
 		}
-		cfg.Store = stmigrate.WrapMigrateDriver(drv)
+		return stmigrate.NewWithWrappedDriver(cfg, drv)
 	} else {
 		fs, err := filestore.New(opts.stateFile)
 		if err != nil {
