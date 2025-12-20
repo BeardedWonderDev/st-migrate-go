@@ -15,6 +15,8 @@ type stubDriver struct {
 	dirty      bool
 	locked     bool
 	closeCalls int
+	versionErr error
+	setErr     error
 }
 
 func (s *stubDriver) Open(url string) (database.Driver, error) { return nil, errors.New("not implemented") }
@@ -34,8 +36,11 @@ func (s *stubDriver) Unlock() error {
 	return nil
 }
 func (s *stubDriver) Run(_ io.Reader) error                    { return nil }
-func (s *stubDriver) SetVersion(v int, d bool) error           { s.version, s.dirty = v, d; return nil }
-func (s *stubDriver) Version() (int, bool, error)              { return s.version, s.dirty, nil }
+func (s *stubDriver) SetVersion(v int, d bool) error {
+	s.version, s.dirty = v, d
+	return s.setErr
+}
+func (s *stubDriver) Version() (int, bool, error)              { return s.version, s.dirty, s.versionErr }
 func (s *stubDriver) Drop() error                              { return nil }
 
 func TestMigrateAdapterDelegates(t *testing.T) {
@@ -55,4 +60,20 @@ func TestMigrateAdapterDelegates(t *testing.T) {
 
 	require.NoError(t, adapter.Close())
 	require.Equal(t, 1, stub.closeCalls)
+}
+
+func TestMigrateAdapterPropagatesVersionError(t *testing.T) {
+	stub := &stubDriver{versionErr: errors.New("boom")}
+	adapter := NewMigrateAdapter(stub)
+
+	_, _, err := adapter.Version(context.Background())
+	require.Error(t, err)
+}
+
+func TestMigrateAdapterPropagatesSetVersionError(t *testing.T) {
+	stub := &stubDriver{setErr: errors.New("boom")}
+	adapter := NewMigrateAdapter(stub)
+
+	err := adapter.SetVersion(context.Background(), 1, false)
+	require.Error(t, err)
 }

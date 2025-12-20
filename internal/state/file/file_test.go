@@ -51,3 +51,23 @@ func TestFileStoreCreateMissingDirs(t *testing.T) {
 	require.NoError(t, store.SetVersion(context.Background(), 1, false))
 	require.FileExists(t, path)
 }
+
+func TestFileStoreInvalidJSON(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "state.json")
+	require.NoError(t, os.WriteFile(path, []byte("{bad json"), 0o644))
+
+	store, err := New(path)
+	require.NoError(t, err)
+	_, _, err = store.Version(context.Background())
+	require.Error(t, err)
+}
+
+func TestFileStoreWriteFailsOnDirectoryPath(t *testing.T) {
+	dir := t.TempDir()
+	store, err := New(dir)
+	require.NoError(t, err)
+
+	err = store.SetVersion(context.Background(), 1, false)
+	require.Error(t, err)
+}

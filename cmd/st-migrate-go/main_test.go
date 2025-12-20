@@ -161,3 +161,24 @@ func TestMainExitsOnError(t *testing.T) {
 
 	require.Equal(t, 1, code)
 }
+
+func TestCLIUpRejectsInvalidTarget(t *testing.T) {
+	var out bytes.Buffer
+	cmd := newRootCmd(&out)
+	cmd.SetArgs([]string{"up", "nope"})
+	require.Error(t, cmd.Execute())
+}
+
+func TestCLIDownRejectsInvalidSteps(t *testing.T) {
+	var out bytes.Buffer
+	cmd := newRootCmd(&out)
+	cmd.SetArgs([]string{"down", "nope"})
+	require.Error(t, cmd.Execute())
+}
+
+func TestCLIMigrateRejectsInvalidTarget(t *testing.T) {
+	var out bytes.Buffer
+	cmd := newRootCmd(&out)
+	cmd.SetArgs([]string{"migrate", "nope"})
+	require.Error(t, cmd.Execute())
+}
