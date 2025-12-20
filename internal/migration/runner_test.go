@@ -172,3 +172,45 @@ func TestRunnerMigrateRejectsUnknownTarget(t *testing.T) {
 	err := r.Migrate(context.Background(), 5)
 	require.Error(t, err)
 }
+
+type closeStore struct {
+	closed bool
+}
+
+func (c *closeStore) Version(_ context.Context) (int, bool, error) { return 0, false, nil }
+func (c *closeStore) SetVersion(_ context.Context, _ int, _ bool) error {
+	return nil
+}
+func (c *closeStore) Lock(_ context.Context) error   { return nil }
+func (c *closeStore) Unlock(_ context.Context) error { return nil }
+func (c *closeStore) Close() error {
+	c.closed = true
+	return nil
+}
+
+func TestRunnerCloseDelegates(t *testing.T) {
+	store := &closeStore{}
+	r := NewRunner(store, executor.NewMock(), schema.DefaultRegistry(), nil, false, nil)
+	require.NoError(t, r.Close())
+	require.True(t, store.closed)
+}
+
+func TestRunnerApplyRejectsUnknownEnsure(t *testing.T) {
+	store := memory.New()
+	r := NewRunner(store, executor.NewMock(), schema.DefaultRegistry(), nil, false, nil)
+
+	err := r.apply(context.Background(), 1, []byte("version: 1\nactions:\n  - role: r\n    ensure: weird\n"))
+	require.Error(t, err)
+}
+
+func TestRunnerMigrateDownMissingVersion(t *testing.T) {
+	store := memory.New()
+	require.NoError(t, store.SetVersion(context.Background(), 2, false))
+	reg := schema.DefaultRegistry()
+	r := NewRunner(store, executor.NewMock(), reg, nil, false, []Migration{
+		{Version: 1, Up: []byte("version: 1"), Down: []byte("version: 1")},
+	})
+
+	err := r.Migrate(context.Background(), 0)
+	require.Error(t, err)
+}
