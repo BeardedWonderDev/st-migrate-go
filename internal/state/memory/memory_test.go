@@ -24,4 +24,6 @@ func TestMemoryStoreVersionAndLocks(t *testing.T) {
 	require.ErrorIs(t, store.Lock(context.Background()), ErrLocked)
 	require.NoError(t, store.Unlock(context.Background()))
 	require.ErrorIs(t, store.Unlock(context.Background()), ErrNotLocked)
+
+	require.NoError(t, store.Close())
 }

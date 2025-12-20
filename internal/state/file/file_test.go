@@ -39,6 +39,8 @@ func TestFileStorePersistsAndLocks(t *testing.T) {
 	raw, err := os.ReadFile(path)
 	require.NoError(t, err)
 	require.Contains(t, string(raw), `"version": 3`)
+
+	require.NoError(t, store.Close())
 }
 
 func TestFileStoreCreateMissingDirs(t *testing.T) {

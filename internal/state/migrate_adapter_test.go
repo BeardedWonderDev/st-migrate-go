@@ -11,13 +11,14 @@ import (
 )
 
 type stubDriver struct {
-	version int
-	dirty   bool
-	locked  bool
+	version    int
+	dirty      bool
+	locked     bool
+	closeCalls int
 }
 
 func (s *stubDriver) Open(url string) (database.Driver, error) { return nil, errors.New("not implemented") }
-func (s *stubDriver) Close() error                            { return nil }
+func (s *stubDriver) Close() error                            { s.closeCalls++; return nil }
 func (s *stubDriver) Lock() error {
 	if s.locked {
 		return database.ErrLocked
@@ -51,4 +52,7 @@ func TestMigrateAdapterDelegates(t *testing.T) {
 	require.ErrorIs(t, adapter.Lock(context.Background()), database.ErrLocked)
 	require.NoError(t, adapter.Unlock(context.Background()))
 	require.ErrorIs(t, adapter.Unlock(context.Background()), database.ErrNotLocked)
+
+	require.NoError(t, adapter.Close())
+	require.Equal(t, 1, stub.closeCalls)
 }
