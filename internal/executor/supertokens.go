@@ -19,14 +19,20 @@ type RolesClient interface {
 
 type superTokensClient struct{}
 
+var (
+	createRoleOrAddPermissions = userroles.CreateNewRoleOrAddPermissions
+	removePermissionsFromRole  = userroles.RemovePermissionsFromRole
+	deleteRole                 = userroles.DeleteRole
+)
+
 func (superTokensClient) CreateNewRoleOrAddPermissions(role string, perms []string, ctx supertokens.UserContext) (userrolesmodels.CreateNewRoleOrAddPermissionsResponse, error) {
-	return userroles.CreateNewRoleOrAddPermissions(role, perms, ctx)
+	return createRoleOrAddPermissions(role, perms, ctx)
 }
 func (superTokensClient) RemovePermissionsFromRole(role string, perms []string, ctx supertokens.UserContext) (userrolesmodels.RemovePermissionsFromRoleResponse, error) {
-	return userroles.RemovePermissionsFromRole(role, perms, ctx)
+	return removePermissionsFromRole(role, perms, ctx)
 }
 func (superTokensClient) DeleteRole(role string, ctx supertokens.UserContext) (userrolesmodels.DeleteRoleResponse, error) {
-	return userroles.DeleteRole(role, ctx)
+	return deleteRole(role, ctx)
 }
 
 var rolesClient RolesClient = superTokensClient{}
