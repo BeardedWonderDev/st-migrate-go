@@ -129,3 +129,35 @@ func TestCLIMigrateCommandUpAndDown(t *testing.T) {
 	require.NoError(t, cmd.Execute())
 	require.Contains(t, out.String(), "current version: 1")
 }
+
+func TestRunStatusSuccess(t *testing.T) {
+	stmigrate.SetDefaultExecutorFactory(func() executor.Executor { return executor.NewMock() })
+
+	tmpDir := t.TempDir()
+	stateFile := filepath.Join(tmpDir, "state.json")
+	source := "file://" + filepath.Join("..", "..", "testdata", "migrations")
+
+	var out bytes.Buffer
+	var errOut bytes.Buffer
+	err := run([]string{"--source", source, "--state-file", stateFile, "status"}, &out, &errOut)
+	require.NoError(t, err)
+	require.Contains(t, out.String(), "current version: 0")
+	require.Empty(t, errOut.String())
+}
+
+func TestMainExitsOnError(t *testing.T) {
+	prevExit := exit
+	prevArgs := os.Args
+	t.Cleanup(func() {
+		exit = prevExit
+		os.Args = prevArgs
+	})
+
+	code := -1
+	exit = func(exitCode int) { code = exitCode }
+	os.Args = []string{"st-migrate-go", "not-a-command"}
+
+	main()
+
+	require.Equal(t, 1, code)
+}
